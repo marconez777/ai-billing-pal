@@ -1590,6 +1590,52 @@ export type Database = {
       }
     }
     Functions: {
+      fn_create_transfer: {
+        Args: {
+          p_amount: number
+          p_counts_personal?: boolean
+          p_description: string
+          p_dst_account: string
+          p_dst_entity: string
+          p_economic_nature?: string
+          p_src_account: string
+          p_src_entity: string
+          p_txn_date: string
+        }
+        Returns: string
+      }
+      fn_invoice_autoreconcile: {
+        Args: { p_invoice_id: string; p_tolerance_cents?: number }
+        Returns: string
+      }
+      fn_refresh_analytics: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      fn_staging_approve: {
+        Args: {
+          p_category_id: string
+          p_entity_id: string
+          p_staging_id: string
+        }
+        Returns: string
+      }
+      fn_staging_lock: {
+        Args: { p_id: string }
+        Returns: boolean
+      }
+      fn_staging_release_stale_locks: {
+        Args: { p_max_minutes?: number }
+        Returns: number
+      }
+      fn_staging_unlock: {
+        Args: { p_id: string }
+        Returns: boolean
+      }
+      fn_staging_unlock_all_for_user: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       gtrgm_compress: {
         Args: { "": unknown }
         Returns: unknown
