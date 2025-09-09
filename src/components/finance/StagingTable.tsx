@@ -8,12 +8,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Lock, Unlock, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { formatCurrency } from '@/lib/pnl';
+import { useEntities } from '@/hooks/useEntities';
+import EntitiesSelect from '@/components/finance/EntitiesSelect';
 
 export const StagingTable = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [stagingData, setStagingData] = useState<any[]>([]);
-  const [entities, setEntities] = useState<any[]>([]);
+  const { rows: entities, loading: entitiesLoading } = useEntities(true);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
@@ -21,23 +23,19 @@ export const StagingTable = () => {
 
   useEffect(() => {
     if (!user) return;
-    loadData();
+    loadStagingAndCategories();
   }, [user]);
 
-  const loadData = async () => {
+  const loadStagingAndCategories = async () => {
+    setLoading(true);
     try {
-      const [stagingRes, entitiesRes, categoriesRes] = await Promise.all([
+      const [stagingRes, categoriesRes] = await Promise.all([
         supabase
           .from('staging_transactions')
           .select('*')
           .eq('user_id', user.id)
           .in('status', ['pending', 'skipped'])
           .order('created_at', { ascending: false }),
-        supabase
-          .from('entities')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('is_active', true),
         supabase
           .from('categories')
           .select('*')
@@ -46,11 +44,9 @@ export const StagingTable = () => {
       ]);
 
       if (stagingRes.error) throw stagingRes.error;
-      if (entitiesRes.error) throw entitiesRes.error;
       if (categoriesRes.error) throw categoriesRes.error;
 
       setStagingData(stagingRes.data || []);
-      setEntities(entitiesRes.data || []);
       setCategories(categoriesRes.data || []);
     } catch (error) {
       console.error('Error loading staging data:', error);
@@ -72,7 +68,7 @@ export const StagingTable = () => {
       
       if (data) {
         toast({ title: "Item bloqueado", description: "Item bloqueado para edição" });
-        loadData(); // Reload to show lock status
+        loadStagingAndCategories(); // Reload to show lock status
       } else {
         toast({
           variant: "destructive",
@@ -103,7 +99,7 @@ export const StagingTable = () => {
       
       if (data) {
         toast({ title: "Item desbloqueado", description: "Item liberado para edição" });
-        loadData();
+        loadStagingAndCategories();
       }
     } catch (error: any) {
       toast({
@@ -129,7 +125,7 @@ export const StagingTable = () => {
         title: "Travas liberadas", 
         description: `${data || 0} travas antigas foram liberadas` 
       });
-      loadData();
+      loadStagingAndCategories();
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -265,7 +261,6 @@ export const StagingTable = () => {
       render: (_: any, row: any) => (
         <StagingRowActions
           row={row}
-          entities={entities}
           categories={categories}
           processing={processing.has(row.id)}
           onLock={() => handleLock(row.id)}
@@ -278,7 +273,7 @@ export const StagingTable = () => {
     }
   ];
 
-  if (loading) {
+  if (loading || entitiesLoading) {
     return (
       <div className="flex items-center justify-center h-40">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -313,7 +308,6 @@ export const StagingTable = () => {
 
 interface StagingRowActionsProps {
   row: any;
-  entities: any[];
   categories: any[];
   processing: boolean;
   onLock: () => void;
@@ -323,7 +317,6 @@ interface StagingRowActionsProps {
 
 const StagingRowActions = ({ 
   row, 
-  entities, 
   categories, 
   processing, 
   onLock, 
@@ -357,18 +350,7 @@ const StagingRowActions = ({
       )}
 
       {/* Entity Select */}
-      <Select value={selectedEntity} onValueChange={setSelectedEntity}>
-        <SelectTrigger className="w-24 h-8">
-          <SelectValue placeholder="Entidade" />
-        </SelectTrigger>
-        <SelectContent>
-          {entities.map(entity => (
-            <SelectItem key={entity.id} value={entity.id}>
-              {entity.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <EntitiesSelect value={selectedEntity} onChange={setSelectedEntity} />
 
       {/* Category Select */}
       <Select value={selectedCategory} onValueChange={setSelectedCategory}>

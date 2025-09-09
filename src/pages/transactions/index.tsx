@@ -10,10 +10,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Receipt, Plus, ArrowRightLeft, Split, CreditCard } from 'lucide-react';
 import { Transaction } from '@/lib/types';
 import { formatCurrency } from '@/lib/pnl';
+import { useEntities } from '@/hooks/useEntities';
 
 const TransactionsPage = () => {
   const [expandedRows, setExpandedRows] = useState<string[]>([]);
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const { rows: entities } = useEntities(false);
 
   // Mock transactions data with parent/child relationships
   const mockTransactions: Transaction[] = [
@@ -21,7 +23,7 @@ const TransactionsPage = () => {
       id: '1',
       user_id: 'mock-user-id',
       account_id: '1',
-      entity_id: '1',
+      entity_id: 'mem-1',
       description: 'PIX RECEBIDO - CLIENTE SILVA LTDA',
       amount: 2500.00,
       date: '2024-01-15',
@@ -34,7 +36,7 @@ const TransactionsPage = () => {
       id: '2',
       user_id: 'mock-user-id',
       account_id: '2',
-      entity_id: '1',
+      entity_id: 'mem-2',
       description: 'COMPRA PARCELADA - EQUIPAMENTOS',
       amount: -1200.00,
       date: '2024-01-10',
@@ -49,7 +51,7 @@ const TransactionsPage = () => {
       id: '2-1',
       user_id: 'mock-user-id',
       account_id: '2',
-      entity_id: '1',
+      entity_id: 'mem-2',
       description: 'COMPRA PARCELADA - EQUIPAMENTOS (1/12)',
       amount: -100.00,
       date: '2024-01-10',
@@ -65,7 +67,7 @@ const TransactionsPage = () => {
       id: '2-2',
       user_id: 'mock-user-id',
       account_id: '2',
-      entity_id: '1',
+      entity_id: 'mem-2',
       description: 'COMPRA PARCELADA - EQUIPAMENTOS (2/12)',
       amount: -100.00,
       date: '2024-02-10',
@@ -81,7 +83,7 @@ const TransactionsPage = () => {
       id: '3',
       user_id: 'mock-user-id',
       account_id: '1',
-      entity_id: '1',
+      entity_id: 'mem-1',
       description: 'TRANSFERENCIA ENTRE CONTAS',
       amount: -1000.00,
       date: '2024-01-12',
@@ -95,7 +97,7 @@ const TransactionsPage = () => {
       id: '4',
       user_id: 'mock-user-id',
       account_id: '2',
-      entity_id: '1',
+      entity_id: 'mem-1',
       description: 'TRANSFERENCIA ENTRE CONTAS',
       amount: 1000.00,
       date: '2024-01-12',
@@ -174,6 +176,21 @@ const TransactionsPage = () => {
           </div>
         </div>
       )
+    },
+    {
+      key: 'entity',
+      label: 'Entidade',
+      width: 150,
+      render: (_: any, row: Transaction) => {
+        const entity = entities.find(e => e.id === row.entity_id);
+        return entity ? (
+          <Badge variant="outline" className="text-xs">
+            {entity.name}
+          </Badge>
+        ) : (
+          <span className="text-muted-foreground text-xs">—</span>
+        );
+      }
     },
     {
       key: 'amount',
