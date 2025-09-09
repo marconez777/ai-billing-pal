@@ -10,7 +10,8 @@ import {
   Calendar, 
   ShieldCheck,
   RefreshCw,
-  FileText
+  FileText,
+  Users
 } from 'lucide-react';
 
 const navItems = [
@@ -48,6 +49,12 @@ const navItems = [
     title: 'Regras',
     href: '/rules',
     icon: Settings,
+    adminOnly: false
+  },
+  {
+    title: 'Entidades',
+    href: '/entities',
+    icon: Users,
     adminOnly: false
   },
   {
