@@ -1612,6 +1612,32 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      fn_seed_accounts_basic: {
+        Args: { p_accounts: Json }
+        Returns: number
+      }
+      fn_seed_categories_base: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      fn_seed_demo_minimal: {
+        Args: {
+          p_company?: string
+          p_couple?: string
+          p_person1?: string
+          p_person2?: string
+        }
+        Returns: string
+      }
+      fn_seed_entities_basic: {
+        Args: {
+          p_company?: string
+          p_couple?: string
+          p_person1?: string
+          p_person2?: string
+        }
+        Returns: number
+      }
       fn_staging_approve: {
         Args: {
           p_category_id: string
