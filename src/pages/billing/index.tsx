@@ -5,61 +5,119 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Plan } from '@/lib/types';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { CreditCard, Calendar, AlertTriangle } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 const BillingPage = () => {
   const { user } = useAuth();
-  const { subscription, isActive, isInTrial, daysUntilExpiration } = useSubscription(user?.id);
+  const { subscription, isActive, isInTrial, daysUntilExpiration, loading } = useSubscription(user?.id);
+  const { toast } = useToast();
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [loadingPlans, setLoadingPlans] = useState(true);
+  const [creatingPayment, setCreatingPayment] = useState<string | null>(null);
 
-  // Mock plans data
-  const plans: Plan[] = [
-    {
-      id: 'basic',
-      name: 'Básico',
-      price: 99.90,
-      features: [
-        'Até 1.000 transações/mês',
-        'Importação de extratos CSV',
-        'Relatórios básicos P&L',
-        'Suporte por email',
-        '2 entidades',
-        '5 contas bancárias'
-      ]
-    },
-    {
-      id: 'professional',
-      name: 'Profissional',
-      price: 199.90,
-      features: [
-        'Até 5.000 transações/mês',
-        'Importação CSV + OFX',
-        'Relatórios avançados',
-        'Categorização com IA',
-        'Suporte prioritário',
-        'Entidades ilimitadas',
-        'Contas ilimitadas',
-        'Regras de categorização',
-        'Transações recorrentes'
-      ]
-    },
-    {
-      id: 'enterprise',
-      name: 'Empresarial',
-      price: 399.90,
-      features: [
-        'Transações ilimitadas',
-        'Todos os recursos Profissional',
-        'API de integração',
-        'Relatórios personalizados',
-        'Suporte 24/7',
-        'Gerente de conta dedicado',
-        'Backups automáticos',
-        'Auditoria completa'
-      ]
+  // Load plans from Supabase
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('plans')
+          .select('*')
+          .eq('is_active', true)
+          .order('sort_order');
+
+        if (error) throw error;
+
+        // Transform database plans to expected format
+        const transformedPlans: Plan[] = data.map(plan => {
+          const limits = plan.limits as any; // Cast JSON to any to access properties
+          return {
+            id: plan.code,
+            name: plan.name,
+            price: plan.price_cents / 100, // Convert cents to reais
+            features: [
+              `${limits.accounts_limit || 0} contas`,
+              `${limits.entities_limit || 0} entidades`,
+              `${limits.imports_per_month || 0} importações/mês`,
+              `${limits.ai_categ_calls || 0} categorização IA/mês`,
+              `${limits.recurrences_limit || 0} regras recorrentes`,
+              `${limits.invoices_limit || 0} faturas/mês`
+            ]
+          };
+        });
+
+        setPlans(transformedPlans);
+      } catch (error) {
+        console.error('Error fetching plans:', error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao carregar planos",
+          description: "Não foi possível carregar os planos disponíveis"
+        });
+      } finally {
+        setLoadingPlans(false);
+      }
+    };
+
+    fetchPlans();
+  }, [toast]);
+
+  const handleSelectPlan = async (planId: string) => {
+    if (!user) return;
+
+    setCreatingPayment(planId);
+    try {
+      // Find the plan and calculate price
+      const plan = plans.find(p => p.id === planId);
+      if (!plan) throw new Error('Plan not found');
+
+      // Create payment record
+      const { data, error } = await supabase
+        .from('payments')
+        .insert({
+          user_id: user.id,
+          amount_cents: Math.round(plan.price * 100),
+          provider: 'manual',
+          status: 'pending',
+          reference: `Plan-${planId}-${Date.now()}`,
+          metadata: {
+            plan_code: planId,
+            plan_name: plan.name
+          }
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Pagamento criado",
+        description: "Seu pagamento foi criado e está aguardando aprovação do admin."
+      });
+
+    } catch (error) {
+      console.error('Error creating payment:', error);
+      toast({
+        variant: "destructive", 
+        title: "Erro ao criar pagamento",
+        description: "Não foi possível criar o pagamento. Tente novamente."
+      });
+    } finally {
+      setCreatingPayment(null);
     }
-  ];
+  };
 
   const currentPlan = plans.find(p => p.id === subscription?.plan_id);
+
+  if (loading || loadingPlans) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -128,8 +186,11 @@ const BillingPage = () => {
           )}
 
           <div className="flex gap-2">
-            <Button disabled>
-              Renovar Assinatura (Em breve)
+            <Button 
+              onClick={() => currentPlan && handleSelectPlan(currentPlan.id)}
+              disabled={creatingPayment !== null}
+            >
+              {creatingPayment ? 'Criando...' : 'Renovar Assinatura'}
             </Button>
             <Button variant="outline" disabled>
               Alterar Forma de Pagamento
@@ -147,10 +208,8 @@ const BillingPage = () => {
               key={plan.id}
               plan={plan}
               isCurrentPlan={plan.id === subscription?.plan_id}
-              disabled={true}
-              onSelect={() => {
-                console.log('Plan selection will be implemented with Stripe integration');
-              }}
+              disabled={creatingPayment !== null}
+              onSelect={() => handleSelectPlan(plan.id)}
             />
           ))}
         </div>

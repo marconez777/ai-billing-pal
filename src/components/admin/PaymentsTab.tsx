@@ -1,51 +1,70 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AdminTable } from './AdminTable';
 import { ApprovePaymentDialog } from './ApprovePaymentDialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Payment } from '@/lib/types';
-import { CheckCircle, XCircle, Clock } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-
-// Mock data for development
-const mockPayments: Payment[] = [
-  {
-    id: '1',
-    user_id: '1',
-    subscription_id: '1',
-    amount: 99.90,
-    provider: 'manual',
-    status: 'pending',
-    created_at: '2024-01-01T10:00:00Z'
-  },
-  {
-    id: '2',
-    user_id: '2',
-    subscription_id: '2',
-    amount: 199.90,
-    provider: 'stripe',
-    status: 'approved',
-    created_at: '2024-01-02T14:30:00Z'
-  }
-];
+import { CheckCircle, XCircle, Clock } from 'lucide-react';
 
 export const PaymentsTab = () => {
-  const [payments, setPayments] = useState<Payment[]>(mockPayments);
-  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [payments, setPayments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  const handleApprovePayment = (paymentId: string, data: { extendDays: number; notes?: string }) => {
-    setPayments(prev => prev.map(payment => 
-      payment.id === paymentId 
-        ? { ...payment, status: 'approved' as const }
-        : payment
-    ));
-    
-    toast({
-      title: "Pagamento aprovado",
-      description: `Assinatura estendida por ${data.extendDays} dias`
-    });
+  useEffect(() => {
+    fetchPayments();
+  }, []);
+
+  const fetchPayments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('payments')
+        .select(`
+          *,
+          profiles!payments_user_id_fkey(name)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setPayments(data || []);
+    } catch (error) {
+      console.error('Error fetching payments:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao carregar pagamentos",
+        description: "Não foi possível carregar a lista de pagamentos"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApprovePayment = async (paymentId: string) => {
+    try {
+      const { data, error } = await supabase.rpc('fn_admin_approve_payment', {
+        p_payment_id: paymentId
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Pagamento aprovado",
+        description: "Assinatura estendida com sucesso"
+      });
+
+      fetchPayments(); // Refresh the list
+      setDialogOpen(false);
+    } catch (error) {
+      console.error('Error approving payment:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao aprovar pagamento",
+        description: error.message || "Não foi possível aprovar o pagamento"
+      });
+    }
   };
 
   const handleRejectPayment = (paymentId: string, reason: string) => {
@@ -64,13 +83,14 @@ export const PaymentsTab = () => {
 
   const columns = [
     {
-      key: 'user_id',
-      label: 'Usuário ID'
+      key: 'profiles.name',
+      label: 'Usuário',
+      render: (_: any, row: any) => row.profiles?.name || 'N/A'
     },
     {
-      key: 'amount',
+      key: 'amount_cents',
       label: 'Valor',
-      render: (value: number) => `R$ ${value.toFixed(2)}`
+      render: (value: number) => `R$ ${(value / 100).toFixed(2)}`
     },
     {
       key: 'provider',
@@ -110,7 +130,7 @@ export const PaymentsTab = () => {
     {
       key: 'actions',
       label: 'Ações',
-      render: (_: any, row: Payment) => (
+      render: (_: any, row: any) => (
         <Button
           variant="outline"
           size="sm"
@@ -121,11 +141,19 @@ export const PaymentsTab = () => {
           }}
           title={row.status !== 'pending' ? 'Apenas pagamentos pendentes podem ser processados' : 'Processar pagamento'}
         >
-          {row.status === 'pending' ? 'Processar' : 'Processado'}
+          {row.status === 'pending' ? 'Aprovar' : 'Processado'}
         </Button>
       )
     }
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

@@ -45,9 +45,9 @@ export const RegisterForm = () => {
       } else {
         toast({
           title: "Conta criada com sucesso",
-          description: "Bem-vindo ao FaturAI!"
+          description: "Verifique seu email para confirmar a conta. Você pode fazer login após a confirmação."
         });
-        navigate('/dashboard');
+        navigate('/login');
       }
     } catch (error) {
       toast({

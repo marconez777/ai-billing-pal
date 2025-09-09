@@ -1590,6 +1590,10 @@ export type Database = {
       }
     }
     Functions: {
+      fn_admin_approve_payment: {
+        Args: { p_payment_id: string }
+        Returns: Json
+      }
       fn_create_transfer: {
         Args: {
           p_amount: number
