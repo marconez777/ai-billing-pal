@@ -114,10 +114,52 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "adjustments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_invoice_summaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adjustments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_open_invoices"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "adjustments_transaction_id_fkey"
             columns: ["transaction_id"]
             isOneToOne: false
             referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adjustments_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "v_cash_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adjustments_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "v_pl_company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adjustments_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "v_pl_personal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adjustments_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "v_transactions_enriched"
             referencedColumns: ["id"]
           },
         ]
@@ -289,10 +331,52 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_invoice_summaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_open_invoices"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "invoice_items_transaction_id_fkey"
             columns: ["transaction_id"]
             isOneToOne: false
             referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "v_cash_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "v_pl_company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "v_pl_personal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "v_transactions_enriched"
             referencedColumns: ["id"]
           },
         ]
@@ -868,17 +952,657 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_invoice_summaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_open_invoices"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "transactions_parent_id_fkey"
             columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "transactions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "transactions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "v_cash_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "v_pl_company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "v_pl_personal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "v_transactions_enriched"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
     Views: {
-      [_ in never]: never
+      v_cash_ledger: {
+        Row: {
+          account_id: string | null
+          account_name: string | null
+          account_type: string | null
+          amount: number | null
+          category_id: string | null
+          category_name: string | null
+          counts_in_company_result: boolean | null
+          counts_in_personal_result: boolean | null
+          created_at: string | null
+          description: string | null
+          economic_nature: string | null
+          entity_id: string | null
+          entity_name: string | null
+          id: string | null
+          inflow: number | null
+          installment_n: number | null
+          installment_of: number | null
+          installment_plan_id: string | null
+          invoice_id: string | null
+          kind: string | null
+          metadata: Json | null
+          month: string | null
+          outflow: number | null
+          parent_id: string | null
+          running_balance: number | null
+          transfer_group_id: string | null
+          txn_date: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_invoice_summaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_open_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "v_cash_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "v_pl_company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "v_pl_personal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "v_transactions_enriched"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_daily_cash_by_account: {
+        Row: {
+          account_id: string | null
+          day: string | null
+          day_balance: number | null
+          day_delta: number | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_invoice_summaries: {
+        Row: {
+          account_id: string | null
+          created_at: string | null
+          cycle_end: string | null
+          cycle_start: string | null
+          due_date: string | null
+          id: string | null
+          invoice_total: number | null
+          paid_amount: number | null
+          paid_at: string | null
+          payer_account_id: string | null
+          remaining_amount: number | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_payer_account_id_fkey"
+            columns: ["payer_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_monthly_cashflow_by_account: {
+        Row: {
+          account_id: string | null
+          cash_in: number | null
+          cash_out: number | null
+          month: string | null
+          net_cash: number | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_open_invoices: {
+        Row: {
+          account_id: string | null
+          created_at: string | null
+          cycle_end: string | null
+          cycle_start: string | null
+          due_date: string | null
+          id: string | null
+          invoice_total: number | null
+          paid_amount: number | null
+          paid_at: string | null
+          payer_account_id: string | null
+          remaining_amount: number | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_payer_account_id_fkey"
+            columns: ["payer_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_pl_company: {
+        Row: {
+          account_id: string | null
+          account_name: string | null
+          account_type: string | null
+          amount: number | null
+          category_id: string | null
+          category_name: string | null
+          counts_in_company_result: boolean | null
+          counts_in_personal_result: boolean | null
+          created_at: string | null
+          description: string | null
+          economic_nature: string | null
+          entity_id: string | null
+          entity_name: string | null
+          id: string | null
+          inflow: number | null
+          installment_n: number | null
+          installment_of: number | null
+          installment_plan_id: string | null
+          invoice_id: string | null
+          kind: string | null
+          metadata: Json | null
+          month: string | null
+          outflow: number | null
+          parent_id: string | null
+          transfer_group_id: string | null
+          txn_date: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_invoice_summaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_open_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "v_cash_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "v_pl_company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "v_pl_personal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "v_transactions_enriched"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_pl_company_monthly: {
+        Row: {
+          expenses: number | null
+          income: number | null
+          month: string | null
+          net_result: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      v_pl_personal: {
+        Row: {
+          account_id: string | null
+          account_name: string | null
+          account_type: string | null
+          amount: number | null
+          category_id: string | null
+          category_name: string | null
+          counts_in_company_result: boolean | null
+          counts_in_personal_result: boolean | null
+          created_at: string | null
+          description: string | null
+          economic_nature: string | null
+          entity_id: string | null
+          entity_name: string | null
+          id: string | null
+          inflow: number | null
+          installment_n: number | null
+          installment_of: number | null
+          installment_plan_id: string | null
+          invoice_id: string | null
+          kind: string | null
+          metadata: Json | null
+          month: string | null
+          outflow: number | null
+          parent_id: string | null
+          transfer_group_id: string | null
+          txn_date: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_invoice_summaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_open_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "v_cash_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "v_pl_company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "v_pl_personal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "v_transactions_enriched"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_pl_personal_monthly: {
+        Row: {
+          expenses: number | null
+          income: number | null
+          month: string | null
+          net_result: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      v_transactions_enriched: {
+        Row: {
+          account_id: string | null
+          account_name: string | null
+          account_type: string | null
+          amount: number | null
+          category_id: string | null
+          category_name: string | null
+          counts_in_company_result: boolean | null
+          counts_in_personal_result: boolean | null
+          created_at: string | null
+          description: string | null
+          economic_nature: string | null
+          entity_id: string | null
+          entity_name: string | null
+          id: string | null
+          inflow: number | null
+          installment_n: number | null
+          installment_of: number | null
+          installment_plan_id: string | null
+          invoice_id: string | null
+          kind: string | null
+          metadata: Json | null
+          month: string | null
+          outflow: number | null
+          parent_id: string | null
+          transfer_group_id: string | null
+          txn_date: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_invoice_summaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_open_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "v_cash_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "v_pl_company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "v_pl_personal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "v_transactions_enriched"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_transfers: {
+        Row: {
+          amount_abs: number | null
+          description: string | null
+          from_account_id: string | null
+          from_account_name: string | null
+          to_account_id: string | null
+          to_account_name: string | null
+          transfer_group_id: string | null
+          txn_date: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_account_id_fkey"
+            columns: ["to_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_account_id_fkey"
+            columns: ["from_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       gtrgm_compress: {
