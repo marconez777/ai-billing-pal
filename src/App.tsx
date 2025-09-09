@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { AdminGuard } from "@/components/auth/AdminGuard";
+import { SubscriptionGuard } from "@/components/auth/SubscriptionGuard";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import Index from "./pages/Index";
 import LoginPage from "./pages/login";
@@ -53,37 +54,47 @@ const App = () => (
           } />
           <Route path="/imports" element={
             <AuthGuard>
-              <DashboardLayout>
-                <ImportsPage />
-              </DashboardLayout>
+              <SubscriptionGuard>
+                <DashboardLayout>
+                  <ImportsPage />
+                </DashboardLayout>
+              </SubscriptionGuard>
             </AuthGuard>
           } />
           <Route path="/transactions" element={
             <AuthGuard>
-              <DashboardLayout>
-                <TransactionsPage />
-              </DashboardLayout>
+              <SubscriptionGuard>
+                <DashboardLayout>
+                  <TransactionsPage />
+                </DashboardLayout>
+              </SubscriptionGuard>
             </AuthGuard>
           } />
           <Route path="/invoices" element={
             <AuthGuard>
-              <DashboardLayout>
-                <InvoicesPage />
-              </DashboardLayout>
+              <SubscriptionGuard>
+                <DashboardLayout>
+                  <InvoicesPage />
+                </DashboardLayout>
+              </SubscriptionGuard>
             </AuthGuard>
           } />
           <Route path="/recurring" element={
             <AuthGuard>
-              <DashboardLayout>
-                <RecurringPage />
-              </DashboardLayout>
+              <SubscriptionGuard>
+                <DashboardLayout>
+                  <RecurringPage />
+                </DashboardLayout>
+              </SubscriptionGuard>
             </AuthGuard>
           } />
           <Route path="/rules" element={
             <AuthGuard>
-              <DashboardLayout>
-                <RulesPage />
-              </DashboardLayout>
+              <SubscriptionGuard>
+                <DashboardLayout>
+                  <RulesPage />
+                </DashboardLayout>
+              </SubscriptionGuard>
             </AuthGuard>
           } />
           <Route path="/" element={<Index />} />

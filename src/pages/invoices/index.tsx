@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,65 +8,104 @@ import { DataGridVirtualized } from '@/components/finance/DataGridVirtualized';
 import { CreditCard, Calendar, DollarSign, AlertTriangle, Eye } from 'lucide-react';
 import { Invoice } from '@/lib/types';
 import { formatCurrency } from '@/lib/pnl';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 const InvoicesPage = () => {
-  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [selectedInvoice, setSelectedInvoice] = useState<any | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [reconciling, setReconciling] = useState<string | null>(null);
 
-  // Mock invoices data
-  const mockInvoices: Invoice[] = [
-    {
-      id: '1',
-      user_id: 'mock-user-id',
-      account_id: '3', // Cartão Nubank
-      close_date: '2024-01-15',
-      due_date: '2024-02-08',
-      amount: 2850.00,
-      paid_amount: 2850.00,
-      payer_account_id: '1', // Conta Corrente PJ
-      status: 'paid'
-    },
-    {
-      id: '2',
-      user_id: 'mock-user-id',
-      account_id: '3',
-      close_date: '2024-02-15',
-      due_date: '2024-03-08',
-      amount: 1950.00,
-      status: 'open'
-    },
-    {
-      id: '3',
-      user_id: 'mock-user-id',
-      account_id: '4', // Cartão Empresa
-      close_date: '2024-01-20',
-      due_date: '2024-02-12',
-      amount: 890.00,
-      status: 'overdue'
+  useEffect(() => {
+    if (!user) return;
+
+    const loadData = async () => {
+      try {
+        const [invoicesRes, accountsRes] = await Promise.all([
+          supabase.from('v_invoice_summaries').select('*').eq('user_id', user.id).order('due_date', { ascending: false }),
+          supabase.from('accounts').select('*').eq('user_id', user.id).eq('is_active', true)
+        ]);
+
+        if (invoicesRes.error) throw invoicesRes.error;
+        if (accountsRes.error) throw accountsRes.error;
+
+        setInvoices(invoicesRes.data || []);
+        setAccounts(accountsRes.data || []);
+      } catch (error) {
+        console.error('Error loading invoices:', error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao carregar faturas",
+          description: "Não foi possível carregar as faturas"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user, toast]);
+
+  const handleAutoReconcile = async (invoiceId: string) => {
+    setReconciling(invoiceId);
+    try {
+      const { data, error } = await supabase.rpc('fn_invoice_autoreconcile', {
+        p_invoice_id: invoiceId,
+        p_tolerance_cents: 100
+      });
+
+      if (error) throw error;
+
+      if (data) {
+        toast({
+          title: "Fatura conciliada",
+          description: `Conciliada com transação ${data}`,
+        });
+        // Reload invoices
+        const { data: updatedInvoices } = await supabase
+          .from('v_invoice_summaries')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('due_date', { ascending: false });
+        
+        setInvoices(updatedInvoices || []);
+      } else {
+        toast({
+          title: "Nenhum pagamento encontrado",
+          description: "Não foi encontrado pagamento dentro da janela ±3 dias/tolerância",
+        });
+      }
+    } catch (error: any) {
+      console.error('Error reconciling invoice:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro na conciliação",
+        description: error.message || "Erro ao tentar conciliar a fatura"
+      });
+    } finally {
+      setReconciling(null);
     }
-  ];
-
-  // Mock accounts for the select
-  const mockAccounts = [
-    { id: '1', name: 'Conta Corrente PJ' },
-    { id: '2', name: 'Conta Poupança' },
-    { id: '3', name: 'Cartão Nubank' },
-    { id: '4', name: 'Cartão Empresa' }
-  ];
+  };
 
   const columns = [
     {
       key: 'account',
       label: 'Cartão',
       width: 150,
-      render: (_: any, row: Invoice) => {
-        const account = mockAccounts.find(acc => acc.id === row.account_id);
+      render: (_: any, row: any) => {
+        const account = accounts.find(acc => acc.id === row.account_id);
         return account?.name || 'N/A';
       }
     },
     {
-      key: 'close_date',
-      label: 'Fechamento',
+      key: 'cycle_start',
+      label: 'Início Ciclo',
       width: 120,
       render: (value: string) => new Date(value).toLocaleDateString('pt-BR')
     },
@@ -77,12 +116,21 @@ const InvoicesPage = () => {
       render: (value: string) => new Date(value).toLocaleDateString('pt-BR')
     },
     {
-      key: 'amount',
-      label: 'Valor',
+      key: 'invoice_total',
+      label: 'Valor Total',
       width: 120,
       render: (value: number) => (
-        <span className="font-medium">{formatCurrency(value)}</span>
+        <span className="font-medium">{formatCurrency(value || 0)}</span>
       )
+    },
+    {
+      key: 'remaining_amount',
+      label: 'Restante',
+      width: 120,
+      render: (value: number, row: any) => {
+        if (!value || value <= 0) return <span className="text-green-600">—</span>;
+        return <span className="font-medium text-red-600">{formatCurrency(value)}</span>;
+      }
     },
     {
       key: 'status',
@@ -109,11 +157,11 @@ const InvoicesPage = () => {
       key: 'payer_account',
       label: 'Pago por',
       width: 150,
-      render: (_: any, row: Invoice) => {
+      render: (_: any, row: any) => {
         if (!row.payer_account_id) {
-          return <span className="text-muted-foreground">-</span>;
+          return <span className="text-muted-foreground">—</span>;
         }
-        const account = mockAccounts.find(acc => acc.id === row.payer_account_id);
+        const account = accounts.find(acc => acc.id === row.payer_account_id);
         return (
           <Badge variant="outline" className="text-xs">
             {account?.name || 'N/A'}
@@ -124,19 +172,31 @@ const InvoicesPage = () => {
     {
       key: 'actions',
       label: 'Ações',
-      width: 120,
-      render: (_: any, row: Invoice) => (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            setSelectedInvoice(row);
-            setDetailDialogOpen(true);
-          }}
-        >
-          <Eye className="h-3 w-3 mr-1" />
-          Detalhes
-        </Button>
+      width: 200,
+      render: (_: any, row: any) => (
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setSelectedInvoice(row);
+              setDetailDialogOpen(true);
+            }}
+          >
+            <Eye className="h-3 w-3 mr-1" />
+            Detalhes
+          </Button>
+          {row.status !== 'paid' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleAutoReconcile(row.id)}
+              disabled={reconciling === row.id}
+            >
+              {reconciling === row.id ? 'Conciliando...' : 'Conciliar'}
+            </Button>
+          )}
+        </div>
       )
     }
   ];
@@ -158,11 +218,11 @@ const InvoicesPage = () => {
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Cartão:</span>
-                  <span>{mockAccounts.find(acc => acc.id === selectedInvoice.account_id)?.name}</span>
+                  <span>{accounts.find(acc => acc.id === selectedInvoice.account_id)?.name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Fechamento:</span>
-                  <span>{new Date(selectedInvoice.close_date).toLocaleDateString('pt-BR')}</span>
+                  <span className="text-muted-foreground">Início Ciclo:</span>
+                  <span>{new Date(selectedInvoice.cycle_start).toLocaleDateString('pt-BR')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Vencimento:</span>
@@ -170,7 +230,7 @@ const InvoicesPage = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Valor:</span>
-                  <span className="font-medium">{formatCurrency(selectedInvoice.amount)}</span>
+                  <span className="font-medium">{formatCurrency(selectedInvoice.invoice_total || 0)}</span>
                 </div>
               </div>
             </div>
@@ -190,23 +250,18 @@ const InvoicesPage = () => {
                     <span className="text-green-600">{formatCurrency(selectedInvoice.paid_amount)}</span>
                   </div>
                 )}
+                {selectedInvoice.remaining_amount > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Valor Restante:</span>
+                    <span className="text-red-600">{formatCurrency(selectedInvoice.remaining_amount)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Pago por:</span>
                   {selectedInvoice.payer_account_id ? (
-                    <span>{mockAccounts.find(acc => acc.id === selectedInvoice.payer_account_id)?.name}</span>
+                    <span>{accounts.find(acc => acc.id === selectedInvoice.payer_account_id)?.name}</span>
                   ) : (
-                    <Select disabled>
-                      <SelectTrigger className="h-8 text-xs">
-                        <SelectValue placeholder="Selecionar conta" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {mockAccounts.filter(acc => acc.id !== selectedInvoice.account_id).map(account => (
-                          <SelectItem key={account.id} value={account.id}>
-                            {account.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <span className="text-muted-foreground">—</span>
                   )}
                 </div>
               </div>
@@ -218,13 +273,22 @@ const InvoicesPage = () => {
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 text-primary mt-0.5" />
               <div className="text-sm">
-                <p className="font-medium mb-1">Conciliação Automática (Futura)</p>
+                <p className="font-medium mb-1">Conciliação Automática</p>
                 <p className="text-muted-foreground">
-                  O sistema buscará automaticamente movimentações de saída no período 
+                  O sistema busca automaticamente movimentações de saída no período 
                   de vencimento (±3 dias) com valor similar (±R$1,00) para identificar 
-                  qual conta foi usada para pagamento. Priorizará contas mais utilizadas 
-                  para este cartão.
+                  qual conta foi usada para pagamento.
                 </p>
+                {selectedInvoice.status !== 'paid' && (
+                  <Button 
+                    className="mt-2" 
+                    size="sm" 
+                    onClick={() => handleAutoReconcile(selectedInvoice.id)}
+                    disabled={reconciling === selectedInvoice.id}
+                  >
+                    {reconciling === selectedInvoice.id ? 'Conciliando...' : 'Tentar Conciliar'}
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -249,7 +313,7 @@ const InvoicesPage = () => {
                 <hr />
                 <div className="flex justify-between font-medium">
                   <span>Total</span>
-                  <span>{formatCurrency(selectedInvoice.amount)}</span>
+                  <span>{formatCurrency(selectedInvoice.invoice_total || 0)}</span>
                 </div>
               </div>
             </div>
@@ -276,7 +340,7 @@ const InvoicesPage = () => {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockInvoices.length}</div>
+            <div className="text-2xl font-bold">{invoices.length}</div>
             <p className="text-xs text-muted-foreground">Este ano</p>
           </CardContent>
         </Card>
@@ -288,7 +352,7 @@ const InvoicesPage = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
-              {mockInvoices.filter(inv => inv.status === 'open').length}
+              {invoices.filter(inv => inv.status === 'open').length}
             </div>
             <p className="text-xs text-muted-foreground">Aguardando vencimento</p>
           </CardContent>
@@ -301,7 +365,7 @@ const InvoicesPage = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              {mockInvoices.filter(inv => inv.status === 'overdue').length}
+              {invoices.filter(inv => inv.status === 'overdue').length}
             </div>
             <p className="text-xs text-muted-foreground">Requer atenção</p>
           </CardContent>
@@ -314,7 +378,7 @@ const InvoicesPage = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency(mockInvoices.reduce((sum, inv) => sum + inv.amount, 0))}
+              {formatCurrency(invoices.reduce((sum, inv) => sum + (inv.invoice_total || 0), 0))}
             </div>
             <p className="text-xs text-muted-foreground">Últimas 3 faturas</p>
           </CardContent>
@@ -330,16 +394,22 @@ const InvoicesPage = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <DataGridVirtualized
-            data={mockInvoices}
-            columns={columns}
-            height={400}
-            rowHeight={50}
-            onRowClick={(row) => {
-              setSelectedInvoice(row);
-              setDetailDialogOpen(true);
-            }}
-          />
+          {loading ? (
+            <div className="flex items-center justify-center h-40">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <DataGridVirtualized
+              data={invoices}
+              columns={columns}
+              height={400}
+              rowHeight={50}
+              onRowClick={(row) => {
+                setSelectedInvoice(row);
+                setDetailDialogOpen(true);
+              }}
+            />
+          )}
         </CardContent>
       </Card>
 

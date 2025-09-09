@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,26 +14,56 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 export const TransferFormStub = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     fromAccount: '',
+    fromEntity: '',
     toAccount: '',
+    toEntity: '',
     amount: '',
     description: '',
     date: new Date(),
     economicNature: 'internal_move',
-    countsInCompanyResult: false,
     countsInPersonalResult: false
   });
 
-  // Mock accounts data
-  const mockAccounts = [
-    { id: '1', name: 'Conta Corrente PJ', type: 'bank' },
-    { id: '2', name: 'Conta Poupança', type: 'bank' },
-    { id: '3', name: 'Cartão Nubank', type: 'card' },
-    { id: '4', name: 'PayPal', type: 'wallet' }
-  ];
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [entities, setEntities] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    
+    const loadAccountsAndEntities = async () => {
+      try {
+        const [accountsRes, entitiesRes] = await Promise.all([
+          supabase.from('accounts').select('*').eq('user_id', user.id).eq('is_active', true),
+          supabase.from('entities').select('*').eq('user_id', user.id).eq('is_active', true)
+        ]);
+
+        if (accountsRes.error) throw accountsRes.error;
+        if (entitiesRes.error) throw entitiesRes.error;
+
+        setAccounts(accountsRes.data || []);
+        setEntities(entitiesRes.data || []);
+      } catch (error) {
+        console.error('Error loading data:', error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao carregar dados",
+          description: "Não foi possível carregar contas e entidades"
+        });
+      }
+    };
+
+    loadAccountsAndEntities();
+  }, [user, toast]);
 
   const economicNatures = [
     { value: 'internal_move', label: 'Movimentação Interna' },
@@ -41,6 +71,70 @@ export const TransferFormStub = () => {
     { value: 'investment', label: 'Investimento' },
     { value: 'refund', label: 'Reembolso' }
   ];
+
+  const handleSubmit = async () => {
+    if (!user || !formData.fromAccount || !formData.fromEntity || 
+        !formData.toAccount || !formData.toEntity || !formData.amount) {
+      toast({
+        variant: "destructive",
+        title: "Dados incompletos",
+        description: "Preencha todos os campos obrigatórios"
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('fn_create_transfer', {
+        p_src_account: formData.fromAccount,
+        p_src_entity: formData.fromEntity,
+        p_dst_account: formData.toAccount,
+        p_dst_entity: formData.toEntity,
+        p_amount: Number(formData.amount),
+        p_txn_date: format(formData.date, 'yyyy-MM-dd'),
+        p_description: formData.description || 'Transferência',
+        p_economic_nature: formData.economicNature,
+        p_counts_personal: formData.countsInPersonalResult
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Transferência criada",
+        description: `Transfer group ID: ${data}`,
+        action: (
+          <Button variant="outline" size="sm" onClick={() => {
+            // Navigate to transactions filtered by this group
+            window.location.href = `/transactions?transfer_group=${data}`;
+          }}>
+            Ver no Extrato
+          </Button>
+        )
+      });
+
+      // Reset form
+      setFormData({
+        fromAccount: '',
+        fromEntity: '',
+        toAccount: '',
+        toEntity: '',
+        amount: '',
+        description: '',
+        date: new Date(),
+        economicNature: 'internal_move',
+        countsInPersonalResult: false
+      });
+    } catch (error: any) {
+      console.error('Error creating transfer:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao criar transferência",
+        description: error.message || "Verifique se as contas e entidades pertencem a você"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Card className="w-full max-w-2xl">
@@ -65,9 +159,9 @@ export const TransferFormStub = () => {
                 <SelectValue placeholder="Selecione a conta de origem" />
               </SelectTrigger>
               <SelectContent>
-                {mockAccounts.map(account => (
+                {accounts.map(account => (
                   <SelectItem key={account.id} value={account.id}>
-                    {account.name}
+                    {account.name} ({account.account_type})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -83,9 +177,47 @@ export const TransferFormStub = () => {
                 <SelectValue placeholder="Selecione a conta de destino" />
               </SelectTrigger>
               <SelectContent>
-                {mockAccounts.map(account => (
+                {accounts.filter(acc => acc.id !== formData.fromAccount).map(account => (
                   <SelectItem key={account.id} value={account.id}>
-                    {account.name}
+                    {account.name} ({account.account_type})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="fromEntity">Entidade de Origem</Label>
+            <Select value={formData.fromEntity} onValueChange={(value) => 
+              setFormData(prev => ({ ...prev, fromEntity: value }))
+            }>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a entidade" />
+              </SelectTrigger>
+              <SelectContent>
+                {entities.map(entity => (
+                  <SelectItem key={entity.id} value={entity.id}>
+                    {entity.name} ({entity.entity_type})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="toEntity">Entidade de Destino</Label>
+            <Select value={formData.toEntity} onValueChange={(value) => 
+              setFormData(prev => ({ ...prev, toEntity: value }))
+            }>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a entidade" />
+              </SelectTrigger>
+              <SelectContent>
+                {entities.map(entity => (
+                  <SelectItem key={entity.id} value={entity.id}>
+                    {entity.name} ({entity.entity_type})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -164,40 +296,31 @@ export const TransferFormStub = () => {
 
         <div className="space-y-3">
           <Label>Contabilização nos Resultados</Label>
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="countsInCompanyResult"
-                checked={formData.countsInCompanyResult}
-                onCheckedChange={(checked) => 
-                  setFormData(prev => ({ ...prev, countsInCompanyResult: !!checked }))
-                }
-              />
-              <Label htmlFor="countsInCompanyResult" className="text-sm">
-                Impacta P&L da Empresa
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="countsInPersonalResult"
-                checked={formData.countsInPersonalResult}
-                onCheckedChange={(checked) => 
-                  setFormData(prev => ({ ...prev, countsInPersonalResult: !!checked }))
-                }
-              />
-              <Label htmlFor="countsInPersonalResult" className="text-sm">
-                Impacta P&L Pessoal
-              </Label>
-            </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="countsInPersonalResult"
+              checked={formData.countsInPersonalResult}
+              onCheckedChange={(checked) => 
+                setFormData(prev => ({ ...prev, countsInPersonalResult: !!checked }))
+              }
+            />
+            <Label htmlFor="countsInPersonalResult" className="text-sm">
+              Impacta P&L Pessoal (para retiradas de sócio, por exemplo)
+            </Label>
           </div>
         </div>
 
         <div className="flex gap-2 pt-4">
-          <Button type="button" variant="outline" className="flex-1">
+          <Button type="button" variant="outline" className="flex-1" disabled={loading}>
             Cancelar
           </Button>
-          <Button type="button" className="flex-1" disabled>
-            Criar Transferência (Em breve)
+          <Button 
+            type="button" 
+            className="flex-1" 
+            onClick={handleSubmit}
+            disabled={loading || !user}
+          >
+            {loading ? 'Criando...' : 'Criar Transferência'}
           </Button>
         </div>
       </CardContent>

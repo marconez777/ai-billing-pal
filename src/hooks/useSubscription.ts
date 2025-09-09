@@ -70,3 +70,12 @@ export const useSubscription = (userId?: string) => {
     hasActiveSubscription
   };
 };
+
+// Helper function for SubscriptionGuard
+export function hasActiveSubscription(sub?: any) {
+  const now = new Date();
+  if (!sub) return false;
+  if (sub.status === 'active' && sub.valid_until && new Date(sub.valid_until) >= now) return true;
+  if (sub.status === 'trial' && sub.trial_until && new Date(sub.trial_until) >= now) return true;
+  return false;
+};

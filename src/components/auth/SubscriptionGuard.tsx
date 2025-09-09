@@ -1,6 +1,8 @@
 import { useAuth } from '@/hooks/useAuth';
-import { useSubscription } from '@/hooks/useSubscription';
+import { useSubscription, hasActiveSubscription } from '@/hooks/useSubscription';
 import { Navigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
+import { useEffect } from 'react';
 
 interface SubscriptionGuardProps {
   children: React.ReactNode;
@@ -8,7 +10,18 @@ interface SubscriptionGuardProps {
 
 export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
   const { user } = useAuth();
-  const { isActive, loading } = useSubscription(user?.id);
+  const { subscription, loading } = useSubscription(user?.id);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (!loading && subscription && !hasActiveSubscription(subscription)) {
+      toast({
+        variant: "destructive",
+        title: "Assinatura inativa",
+        description: "Você precisa de uma assinatura ativa para acessar esta funcionalidade"
+      });
+    }
+  }, [subscription, loading, toast]);
 
   if (loading) {
     return (
@@ -18,8 +31,7 @@ export const SubscriptionGuard = ({ children }: SubscriptionGuardProps) => {
     );
   }
 
-  // For now, always allow access (mock subscription is always active)
-  if (!isActive) {
+  if (!hasActiveSubscription(subscription)) {
     return <Navigate to="/billing" replace />;
   }
 
