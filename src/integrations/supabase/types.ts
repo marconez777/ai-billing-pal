@@ -14,6 +14,114 @@ export type Database = {
   }
   public: {
     Tables: {
+      accounts: {
+        Row: {
+          account_type: string
+          close_day: number | null
+          created_at: string
+          currency: string
+          due_day: number | null
+          id: string
+          is_active: boolean
+          name: string
+          owner_entity_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_type: string
+          close_day?: number | null
+          created_at?: string
+          currency?: string
+          due_day?: number | null
+          id?: string
+          is_active?: boolean
+          name: string
+          owner_entity_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_type?: string
+          close_day?: number | null
+          created_at?: string
+          currency?: string
+          due_day?: number | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          owner_entity_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounts_owner_entity_id_fkey"
+            columns: ["owner_entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      adjustments: {
+        Row: {
+          amount: number
+          created_at: string
+          entity_id: string
+          id: string
+          invoice_id: string | null
+          kind: string
+          note: string | null
+          transaction_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          entity_id: string
+          id?: string
+          invoice_id?: string | null
+          kind: string
+          note?: string | null
+          transaction_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          entity_id?: string
+          id?: string
+          invoice_id?: string | null
+          kind?: string
+          note?: string | null
+          transaction_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "adjustments_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adjustments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adjustments_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -46,6 +154,288 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      categories: {
+        Row: {
+          created_at: string
+          id: string
+          is_archived: boolean
+          name: string
+          parent_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          name: string
+          parent_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          name?: string
+          parent_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entities: {
+        Row: {
+          created_at: string
+          entity_type: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          entity_type: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          entity_type?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      imports: {
+        Row: {
+          account_id: string
+          created_at: string
+          file_hash: string | null
+          id: string
+          metadata: Json
+          period_end: string | null
+          period_start: string | null
+          source: string | null
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          file_hash?: string | null
+          id?: string
+          metadata?: Json
+          period_end?: string | null
+          period_start?: string | null
+          source?: string | null
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          file_hash?: string | null
+          id?: string
+          metadata?: Json
+          period_end?: string | null
+          period_start?: string | null
+          source?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imports_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_items: {
+        Row: {
+          invoice_id: string
+          transaction_id: string
+        }
+        Insert: {
+          invoice_id: string
+          transaction_id: string
+        }
+        Update: {
+          invoice_id?: string
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          account_id: string
+          created_at: string
+          cycle_end: string
+          cycle_start: string
+          due_date: string
+          id: string
+          metadata: Json
+          paid_amount: number | null
+          paid_at: string | null
+          payer_account_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          cycle_end: string
+          cycle_start: string
+          due_date: string
+          id?: string
+          metadata?: Json
+          paid_amount?: number | null
+          paid_at?: string | null
+          payer_account_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          cycle_end?: string
+          cycle_start?: string
+          due_date?: string
+          id?: string
+          metadata?: Json
+          paid_amount?: number | null
+          paid_at?: string | null
+          payer_account_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_payer_account_id_fkey"
+            columns: ["payer_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      local_rules: {
+        Row: {
+          account_id: string | null
+          created_at: string
+          entity_id: string | null
+          id: string
+          is_active: boolean
+          match_type: string
+          pattern: string
+          priority: number
+          scope: string
+          suggest_category_id: string | null
+          suggest_entity_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          id?: string
+          is_active?: boolean
+          match_type: string
+          pattern: string
+          priority?: number
+          scope?: string
+          suggest_category_id?: string | null
+          suggest_entity_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          id?: string
+          is_active?: boolean
+          match_type?: string
+          pattern?: string
+          priority?: number
+          scope?: string
+          suggest_category_id?: string | null
+          suggest_entity_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "local_rules_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "local_rules_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "local_rules_suggest_category_id_fkey"
+            columns: ["suggest_category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "local_rules_suggest_entity_id_fkey"
+            columns: ["suggest_entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payments: {
         Row: {
@@ -160,6 +550,177 @@ export type Database = {
         }
         Relationships: []
       }
+      recurring_rules: {
+        Row: {
+          account_id: string | null
+          amount: number | null
+          category_id: string | null
+          created_at: string
+          entity_id: string
+          id: string
+          is_paused: boolean
+          last_run_at: string | null
+          next_run_at: string | null
+          rrule: string
+          template: Json
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          amount?: number | null
+          category_id?: string | null
+          created_at?: string
+          entity_id: string
+          id?: string
+          is_paused?: boolean
+          last_run_at?: string | null
+          next_run_at?: string | null
+          rrule: string
+          template?: Json
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          amount?: number | null
+          category_id?: string | null
+          created_at?: string
+          entity_id?: string
+          id?: string
+          is_paused?: boolean
+          last_run_at?: string | null
+          next_run_at?: string | null
+          rrule?: string
+          template?: Json
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_rules_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_rules_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_rules_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staging_transactions: {
+        Row: {
+          account_id: string
+          ai_category_hint: string | null
+          ai_confidence: number | null
+          amount: number
+          created_at: string
+          description: string
+          description_hash: string | null
+          description_norm: string | null
+          external_id: string | null
+          id: string
+          import_id: string
+          lock_owner: string | null
+          locked_at: string | null
+          metadata: Json
+          status: string
+          suggested_category_id: string | null
+          suggested_entity_id: string | null
+          txn_date: string
+          user_id: string
+          version: number
+        }
+        Insert: {
+          account_id: string
+          ai_category_hint?: string | null
+          ai_confidence?: number | null
+          amount: number
+          created_at?: string
+          description: string
+          description_hash?: string | null
+          description_norm?: string | null
+          external_id?: string | null
+          id?: string
+          import_id: string
+          lock_owner?: string | null
+          locked_at?: string | null
+          metadata?: Json
+          status?: string
+          suggested_category_id?: string | null
+          suggested_entity_id?: string | null
+          txn_date: string
+          user_id: string
+          version?: number
+        }
+        Update: {
+          account_id?: string
+          ai_category_hint?: string | null
+          ai_confidence?: number | null
+          amount?: number
+          created_at?: string
+          description?: string
+          description_hash?: string | null
+          description_norm?: string | null
+          external_id?: string | null
+          id?: string
+          import_id?: string
+          lock_owner?: string | null
+          locked_at?: string | null
+          metadata?: Json
+          status?: string
+          suggested_category_id?: string | null
+          suggested_entity_id?: string | null
+          txn_date?: string
+          user_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staging_transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staging_transactions_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staging_transactions_suggested_category_id_fkey"
+            columns: ["suggested_category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staging_transactions_suggested_entity_id_fkey"
+            columns: ["suggested_entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           canceled_at: string | null
@@ -204,6 +765,114 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "plans"
             referencedColumns: ["code"]
+          },
+        ]
+      }
+      transactions: {
+        Row: {
+          account_id: string
+          amount: number
+          category_id: string | null
+          counts_in_company_result: boolean
+          counts_in_personal_result: boolean
+          created_at: string
+          description: string
+          economic_nature: string | null
+          entity_id: string
+          id: string
+          installment_n: number | null
+          installment_of: number | null
+          installment_plan_id: string | null
+          invoice_id: string | null
+          kind: string
+          metadata: Json
+          parent_id: string | null
+          transfer_group_id: string | null
+          txn_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          category_id?: string | null
+          counts_in_company_result?: boolean
+          counts_in_personal_result?: boolean
+          created_at?: string
+          description: string
+          economic_nature?: string | null
+          entity_id: string
+          id?: string
+          installment_n?: number | null
+          installment_of?: number | null
+          installment_plan_id?: string | null
+          invoice_id?: string | null
+          kind: string
+          metadata?: Json
+          parent_id?: string | null
+          transfer_group_id?: string | null
+          txn_date: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          category_id?: string | null
+          counts_in_company_result?: boolean
+          counts_in_personal_result?: boolean
+          created_at?: string
+          description?: string
+          economic_nature?: string | null
+          entity_id?: string
+          id?: string
+          installment_n?: number | null
+          installment_of?: number | null
+          installment_plan_id?: string | null
+          invoice_id?: string | null
+          kind?: string
+          metadata?: Json
+          parent_id?: string | null
+          transfer_group_id?: string | null
+          txn_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
           },
         ]
       }
