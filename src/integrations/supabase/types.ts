@@ -1608,6 +1608,10 @@ export type Database = {
         }
         Returns: string
       }
+      fn_entity_usage: {
+        Args: { p_entity_id: string }
+        Returns: Json
+      }
       fn_invoice_autoreconcile: {
         Args: { p_invoice_id: string; p_tolerance_cents?: number }
         Returns: string

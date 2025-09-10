@@ -25,19 +25,25 @@ export class EntitiesServiceSupabase implements IEntitiesService {
     if (error) throw error;
   }
   async countUsage(id: string): Promise<EntityUsage> {
-    // Versão 1: 3 contagens em paralelo (funciona com RLS)
-    const [tx, acc, adj] = await Promise.all([
-      supabase.from('transactions').select('id', { count: 'exact', head: true }).eq('entity_id', id),
-      supabase.from('accounts').select('id', { count: 'exact', head: true }).eq('owner_entity_id', id),
-      supabase.from('adjustments').select('id', { count: 'exact', head: true }).eq('entity_id', id),
-    ]);
-    if (tx.error || acc.error || adj.error) throw tx.error || acc.error || adj.error;
-    const usage: EntityUsage = {
-      transactions: tx.count ?? 0,
-      accounts: acc.count ?? 0,
-      adjustments: adj.count ?? 0,
-      total: (tx.count ?? 0) + (acc.count ?? 0) + (adj.count ?? 0),
-    };
-    return usage;
+    // Versão 2: Usando a função RPC otimizada
+    try {
+      const { data, error } = await supabase.rpc('fn_entity_usage', { p_entity_id: id });
+      if (error) throw error;
+      return data as EntityUsage;
+    } catch (error) {
+      // Fallback para versão paralela se RPC falhar
+      const [tx, acc, adj] = await Promise.all([
+        supabase.from('transactions').select('id', { count: 'exact', head: true }).eq('entity_id', id),
+        supabase.from('accounts').select('id', { count: 'exact', head: true }).eq('owner_entity_id', id),
+        supabase.from('adjustments').select('id', { count: 'exact', head: true }).eq('entity_id', id),
+      ]);
+      if (tx.error || acc.error || adj.error) throw tx.error || acc.error || adj.error;
+      return {
+        transactions: tx.count ?? 0,
+        accounts: acc.count ?? 0,
+        adjustments: adj.count ?? 0,
+        total: (tx.count ?? 0) + (acc.count ?? 0) + (adj.count ?? 0),
+      };
+    }
   }
 }

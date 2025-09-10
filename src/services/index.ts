@@ -1,6 +1,4 @@
 // src/services/index.ts
-import { EntitiesServiceMemory } from './entities.service';
-export const entitiesService = new EntitiesServiceMemory();
-// Quando for usar Supabase amanhã, troque para:
-// import { EntitiesServiceSupabase } from './entities.supabase';
-// export const entitiesService = new EntitiesServiceSupabase();
+import { EntitiesServiceSupabase } from './entities.supabase';
+export const entitiesService = new EntitiesServiceSupabase();
+// Agora usando Supabase real em vez do mock in-memory
