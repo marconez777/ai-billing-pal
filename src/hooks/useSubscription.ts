@@ -9,7 +9,7 @@ export const useSubscription = (userId?: string) => {
 
   useEffect(() => {
     if (!userId) {
-      setLoading(false);
+      // Mantém loading=true até o userId existir para evitar redireciono indevido
       return;
     }
 
