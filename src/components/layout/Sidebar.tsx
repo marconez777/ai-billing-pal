@@ -11,7 +11,8 @@ import {
   ShieldCheck,
   RefreshCw,
   FileText,
-  Users
+  Users,
+  Wallet
 } from 'lucide-react';
 
 const navItems = [
@@ -49,6 +50,12 @@ const navItems = [
     title: 'Regras',
     href: '/rules',
     icon: Settings,
+    adminOnly: false
+  },
+  {
+    title: 'Contas',
+    href: '/accounts',
+    icon: Wallet,
     adminOnly: false
   },
   {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,10 +17,15 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useAccounts } from '@/hooks/useAccounts';
+import { useEntities } from '@/hooks/useEntities';
 
 export const TransferFormStub = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { rows: accounts, loading: accountsLoading } = useAccounts(true);
+  const { rows: entities, loading: entitiesLoading } = useEntities(true);
+  
   const [formData, setFormData] = useState({
     fromAccount: '',
     fromEntity: '',
@@ -33,37 +38,7 @@ export const TransferFormStub = () => {
     countsInPersonalResult: false
   });
 
-  const [accounts, setAccounts] = useState<any[]>([]);
-  const [entities, setEntities] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!user) return;
-    
-    const loadAccountsAndEntities = async () => {
-      try {
-        const [accountsRes, entitiesRes] = await Promise.all([
-          supabase.from('accounts').select('*').eq('user_id', user.id).eq('is_active', true),
-          supabase.from('entities').select('*').eq('user_id', user.id).eq('is_active', true)
-        ]);
-
-        if (accountsRes.error) throw accountsRes.error;
-        if (entitiesRes.error) throw entitiesRes.error;
-
-        setAccounts(accountsRes.data || []);
-        setEntities(entitiesRes.data || []);
-      } catch (error) {
-        console.error('Error loading data:', error);
-        toast({
-          variant: "destructive",
-          title: "Erro ao carregar dados",
-          description: "Não foi possível carregar contas e entidades"
-        });
-      }
-    };
-
-    loadAccountsAndEntities();
-  }, [user, toast]);
 
   const economicNatures = [
     { value: 'internal_move', label: 'Movimentação Interna' },

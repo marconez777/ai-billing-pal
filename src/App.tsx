@@ -19,6 +19,7 @@ import InvoicesPage from "./pages/invoices/index";
 import RecurringPage from "./pages/recurring/index";
 import RulesPage from "./pages/rules/index";
 import EntitiesPage from "./pages/entities/index";
+import AccountsPage from "./pages/accounts/index";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -103,6 +104,15 @@ const App = () => (
               <SubscriptionGuard>
                 <DashboardLayout>
                   <EntitiesPage />
+                </DashboardLayout>
+              </SubscriptionGuard>
+            </AuthGuard>
+          } />
+          <Route path="/accounts" element={
+            <AuthGuard>
+              <SubscriptionGuard>
+                <DashboardLayout>
+                  <AccountsPage />
                 </DashboardLayout>
               </SubscriptionGuard>
             </AuthGuard>
